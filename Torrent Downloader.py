@@ -13,7 +13,7 @@ import requests
 import subprocess
 import time
 a = []
-path = "C:\Users\Soumendra\AppData\Roaming\uTorrent\uTorrent.exe"
+path = "C:\Users\Soumendra\AppData\Roaming\uTorrent\uTorrent.exe" #Change this path
 def get_page(url):
     hdr={'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
     req = urllib2.Request(url, headers=hdr)    
@@ -81,4 +81,4 @@ if __name__ == "__main__":
             print "Error in finding torrent"
         else:
             print "Torrent downloading is "+title
-#             p = subprocess.Popen([path,magnet])
+            p = subprocess.Popen([path,magnet])
