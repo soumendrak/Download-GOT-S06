@@ -8,20 +8,34 @@
 #-------------------------------------------------------------------------------
 #change the client path
 import urllib2
-import json
-import time
+from bs4 import BeautifulSoup
+import requests
 import subprocess
-from Tkinter import Tk
-from tkFileDialog import askopenfilename
-import os
+import time
+a = []
+path = "C:\Users\Soumendra\AppData\Roaming\uTorrent\uTorrent.exe"
 def get_page(url):
     hdr={'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
-    req = urllib2.Request(url, headers=hdr)
+    req = urllib2.Request(url, headers=hdr)    
     return urllib2.urlopen(req).read()
+
+def get_final_page(url):
+    r = requests.get(url)
+    data = r.text
+    soup = BeautifulSoup(data, "lxml")
+    print str(soup.title)
+    for link in soup.find_all('a'):
+        a.append(link.get('href'))
+        print str(link.get('href'))
+    for i in range(len(a)):
+        if a[i][0:7] == 'magnet:':
+#             print a[i]
+            return a[i], str(soup.title)
+            break  
 
 def go_to_next_page(page):
     start_link=page.find('<div class="results"')
-    page=page[start_link:]
+    page=page[start_link:] 
     start_link=page.find("<dl>")
     end_link=page.find("</dl>")
     page=page[start_link:end_link]
@@ -34,12 +48,13 @@ def go_to_next_page(page):
     return url
 
 def go_to_torrent_page(page):
-    kickFind='<a href="http://katproxy'
+    kickFind='<a href="https://kat.cr'
     start_link=page.find(kickFind)
     if start_link==-1:
         kickFind='<a href="http://extratorrent.cc'
         start_link=page.find(kickFind)
         if start_link==-1:
+            kickFind='<a href="https://thepiratebay.se'
             return False
         
     page[start_link-3:]
@@ -47,50 +62,23 @@ def go_to_torrent_page(page):
     end_quote=page.find('"',start_quote+1)
     url=page[start_quote+1:end_quote]
     return url
-
-def get_magnet(page):
-    titleFind="<title>"
-    start_link=page.find(titleFind)+15
-    end_link=page.find("</title>")
-    title=page[start_link:end_link]
-    magnetFind='href="magnet:'
-    start_link=page.find(magnetFind)
-    if start_link==-1:
-        return False,False
-    page[start_link-3:]
-    start_quote=page.find('"',start_link)
-    end_quote=page.find('"',start_quote+1)
-    url=page[start_quote+1:end_quote]
-    return url,title
-
-searchItem=raw_input("Enter the torrent you wish to search(For Starter Try Arrow):")
-completeUrl="http://torrentz.in/search?q="+searchItem.replace(" ","+")
-pageContent=get_page(completeUrl)
-print "30% done"
-newUrl="http://torrentz.in"+go_to_next_page(pageContent) 
-nextPageContent=get_page(newUrl)
-finalUrl=go_to_torrent_page(nextPageContent)
-if finalUrl==False:
-    print "Cant process Ahead"
-else:
-    print "60% done"
-    finalPageContent=get_page(finalUrl)
-    magnet,title=get_magnet(finalPageContent)
-    print "100% done"
-    if magnet==False:
-        print "Error in finding torrent"
-    if magnet!=False:
-        print "Torrent downloading is "+title
-        if (os.path.exists(os.getcwd()+"/torrentClient.txt")):
-                f = open('torrentClient.txt', 'r')
-                path=f.readline()
-                print "Torrent downloading is "+title
-                p = subprocess.Popen([path,magnet])
+        
+if __name__ == "__main__":
+    searchItem=raw_input("Enter the torrent you wish to search:")
+    completeUrl="http://torrentz.com/search?q="+searchItem.replace(" ","+")
+    pageContent=get_page(completeUrl)    
+    newUrl="http://torrentz.com"+ str(go_to_next_page(pageContent))
+    print 'newUrl', newUrl
+    nextPageContent=get_page(newUrl)
+    finalUrl=go_to_torrent_page(nextPageContent)
+    print "final URL", finalUrl
+    if finalUrl==False:
+        print "Can not process Ahead"
+    else:        
+        print "this is the final URL", finalUrl
+        magnet, title=get_final_page(finalUrl)        
+        if magnet==False:
+            print "Error in finding torrent"
         else:
-                Tk().withdraw()
-                path = askopenfilename(title='Select Your Torrent Client')
-                f = open("torrentClient.txt", 'w+')
-                f.write(path)
-                print "Torrent downloading is "+title
-                p = subprocess.Popen([path,magnet])
-        f.close()
+            print "Torrent downloading is "+title
+#             p = subprocess.Popen([path,magnet])
