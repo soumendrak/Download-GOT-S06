@@ -87,7 +87,7 @@ if __name__ == "__main__":
         if Flag == 'N':
             Flag, title = main(Flag)
             if Flag != 'Y':
-                time.sleep(1)                
+                time.sleep(1800)                
         else:
             print time.strftime('%X'),":  Torrent downloaded"
             email = 'xxxxxxxxy3@gmail.com xxxxxxxxxilu@yahoo.com '
