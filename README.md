@@ -1,10 +1,12 @@
-download-latest-torrent
-=======================
+download-Game-of-thrones season 6
+==================================
 
-A python script which downloads the best torrent for the given query string.
+A python script which downloads the season 6 Game of thrones episodes as soon as it got released.
 
 Instructions on HowTo use:<br />
-1)Run <br />
-2)Enter the file name you wish to download (E.g: Arrow , This will download the latest episode of arrow)<br />
-3)A file picker will pop up. Selct your torrent client (Need to setup only first time)<br />
+1)Download all the files in a single folder <br />
+2)Change the path name in the "torrent-downloader.py" file <br />
+3)For SMS and Email notification refer this site https://automatetheboringstuff.com/chapter16/ for details. <br />
+4)Schedule in windows task scheduler to run in every Monday morning 9AM
+5)Ignore point 4), if you do not want to schedule it.
 That's it
