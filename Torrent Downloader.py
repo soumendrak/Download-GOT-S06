@@ -1,37 +1,26 @@
-#-------------------------------------------------------------------------------
-# Name:        Search new torrent and Download
-# Purpose:
-#
-# Author:      Nagraj Gajengi
-#
-# Created:     12/21/2014
-#-------------------------------------------------------------------------------
-#change the client path
 import urllib2
 from bs4 import BeautifulSoup
 import requests
 import subprocess
 import time
-a = []
-path = "C:\Users\Soumendra\AppData\Roaming\uTorrent\uTorrent.exe" #Change this path
+from sms import texting
+from email_code import sendemail
+path = "C:\Users\Soumendra\AppData\Roaming\uTorrent\uTorrent.exe" #uTorrent path
 def get_page(url):
     hdr={'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
-    req = urllib2.Request(url, headers=hdr)    
-    return urllib2.urlopen(req).read()
+    try:
+        req = urllib2.Request(url, headers=hdr)     
+        return urllib2.urlopen(req).read()
+    except urllib2.URLError:
+        return "No"      
 
 def get_final_page(url):
-    r = requests.get(url)
-    data = r.text
-    soup = BeautifulSoup(data, "lxml")
-    print str(soup.title)
+    data = requests.get(url)
+    soup = BeautifulSoup(data.text, "lxml")
+    title = str(soup.title).replace("<title>","").replace("</title>","").replace("Download","")
     for link in soup.find_all('a'):
-        a.append(link.get('href'))
-        print str(link.get('href'))
-    for i in range(len(a)):
-        if a[i][0:7] == 'magnet:':
-#             print a[i]
-            return a[i], str(soup.title)
-            break  
+        if str(link.get('href'))[0:7] == 'magnet:':
+            return str(link.get('href')), ">>"+title+"<<"
 
 def go_to_next_page(page):
     start_link=page.find('<div class="results"')
@@ -45,7 +34,9 @@ def go_to_next_page(page):
     start_quote=page.find('"',start_link)
     end_quote=page.find('"',start_quote+1)
     url=page[start_quote+1:end_quote]
-    return url
+    return url 
+    #Returns the first URL of the page 
+    #i.e. the link with maximum seeders
 
 def go_to_torrent_page(page):
     kickFind='<a href="https://kat.cr'
@@ -55,7 +46,9 @@ def go_to_torrent_page(page):
         start_link=page.find(kickFind)
         if start_link==-1:
             kickFind='<a href="https://thepiratebay.se'
-            return False
+            start_link=page.find(kickFind)
+            if start_link==-1:
+                return False
         
     page[start_link-3:]
     start_quote=page.find('"',start_link)
@@ -63,22 +56,43 @@ def go_to_torrent_page(page):
     url=page[start_quote+1:end_quote]
     return url
         
-if __name__ == "__main__":
+def main(Flag):
     searchItem=raw_input("Enter the torrent you wish to search:")
+#     searchItem="Game of thrones S06E09"
     completeUrl="http://torrentz.com/search?q="+searchItem.replace(" ","+")
     pageContent=get_page(completeUrl)    
     newUrl="http://torrentz.com"+ str(go_to_next_page(pageContent))
-    print 'newUrl', newUrl
     nextPageContent=get_page(newUrl)
-    finalUrl=go_to_torrent_page(nextPageContent)
-    print "final URL", finalUrl
+    if nextPageContent == "No":
+        print time.strftime('%X'), ":  File NOT avaiable yet"                
+        return "N"
+    finalUrl=go_to_torrent_page(nextPageContent)    
     if finalUrl==False:
-        print "Can not process Ahead"
+        print "Can not process Ahead as URL not found"
+        print "Go to this link: %s to download manually" %(finalUrl)
     else:        
-        print "this is the final URL", finalUrl
         magnet, title=get_final_page(finalUrl)        
         if magnet==False:
-            print "Error in finding torrent"
+            print "Error in finding the magnet link of the torrent"
+            print "Go to this link: %s to download manually" %(finalUrl)
         else:
-            print "Torrent downloading is "+title
-            p = subprocess.Popen([path,magnet])
+            print "The %s torrent is ready to download" %title
+            Flag = 'Y'
+            subprocess.Popen([path,magnet])
+    return Flag, title
+
+if __name__ == "__main__":
+    Flag = 'N'
+    while True:
+        if Flag == 'N':
+            Flag, title = main(Flag)
+            if Flag != 'Y':
+                time.sleep(1)                
+        else:
+            print time.strftime('%X'),":  Torrent downloaded"
+            email = 'xxxxxxxxy3@gmail.com xxxxxxxxxilu@yahoo.com '
+            number = '+91XXXXXXXXX +91XXXXXXXXX'
+            message = 'Subject: Torrent status. \nThe file ' + title + ' is available now. Downloading it'
+            texting(message, number)
+            sendemail(email, message)
+            break
